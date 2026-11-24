@@ -21,12 +21,27 @@ def validate(text: str) -> None:
         raise ValueError(f"entry is {len(text)} characters, over the 200 limit")
     if "\n" in text or "\r" in text:
         raise ValueError("entry must be a single line")
+    sneaky = ["​", "‌", "‍", "﻿", "\t"]
+    for mark in sneaky:
+        if mark in text:
+            raise ValueError("entry contains an invisible character")
+    first_letter = next((ch for ch in text if ch.isalpha()), "")
+    if first_letter and first_letter != first_letter.upper():
+        raise ValueError("entry must start with a capital letter")
+
+
+def resolve_output_path() -> str:
+    """Pick where the entry file goes, honouring OUTPUT_PATH."""
+    chosen = os.environ.get("OUTPUT_PATH", "/output/entry.txt")
+    folder = os.path.dirname(chosen)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    return chosen
 
 
 def main() -> None:
     validate(ENTRY)
-    output_path = os.environ.get("OUTPUT_PATH", "/output/entry.txt")
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    output_path = resolve_output_path()
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(ENTRY)
 
